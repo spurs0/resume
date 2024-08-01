@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan Calculator</title>
+    <!-- Vue.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+<div id="app" class="container">
+    <h2 class="mb-4">是否提前还贷</h2>
+    <form @submit.prevent="calculate">
+        <div class="form-group">
+            <label for="principal">贷款总金额 (CNY)</label>
+            <input type="text" class="form-control" id="principal" v-model="principal" required>
+        </div>
+        <div class="form-group">
+            <label for="annual_rate">银行存款年利率 (%)</label>
+            <input type="text" class="form-control" id="annual_rate" v-model="annualRate" required>
+        </div>
+        <div class="form-group">
+            <label for="monthly_payment">每月还款金额 (CNY)</label>
+            <input type="text" class="form-control" id="monthly_payment" v-model="monthlyPayment" required>
+        </div>
+        <button type="submit" class="btn btn-primary">计算</button>
+    </form>
+
+    <div v-if="results">
+        <h4 class="mt-4">如果这些钱存银行——</h4>
+        <p>能够还款的期数 : {{ results.months }} （月）</p>
+        <p>能够还款的年限 : {{ results.years }} （年）</p>
+        <p>放银行{{ results.years }}年产生的利息 : CNY {{ results.totalInterest }} （元）</p>
+        <hr>
+        <p>利息计算方式：比如10万元放银行，每月还款2500元，银行年利率是2.6%。那么第一年末，本金剩余10万-(12*2500)=7万元。第二年的利息计算即使用【7万元+第一年的利息】作为本金*2.6%</p>
+    </div>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            principal: '',
+            annualRate: '',
+            monthlyPayment: '',
+            results: null
+        },
+        methods: {
+            calculate: function() {
+                // Convert annual interest rate to decimal
+                const annualRateDecimal = parseFloat(this.annualRate) / 100;
+
+                // Convert principal and monthly payment to numbers
+                const principalNum = parseFloat(this.principal);
+                const monthlyPaymentNum = parseFloat(this.monthlyPayment);
+
+                let remainingAmount = principalNum;
+                let months = 0;
+                let totalInterest = 0;
+
+                // Convert annual interest rate to monthly
+                const monthlyInterestRate = annualRateDecimal / 12;
+
+                // Loop to simulate monthly repayments
+                while (remainingAmount > 0) {
+                    // Deduct monthly repayment
+                    remainingAmount -= monthlyPaymentNum;
+                    months++; // Increment months counter
+
+                    // Calculate interest every 12 months
+                    if (months % 12 === 0) {
+                        const interest = remainingAmount * monthlyInterestRate * 12;
+                        remainingAmount += interest;
+                        totalInterest += interest;
+                    }
+
+                    // Stop calculation if remaining amount is negative (loan repaid)
+                    if (remainingAmount <= 0) {
+                        break;
+                    }
+                }
+
+                // Calculate years from months
+                const years = Math.floor(months / 12);
+
+                // Set results to be displayed
+                this.results = {
+                    months: months,
+                    years: years,
+                    totalInterest: totalInterest.toFixed(2) // Round to 2 decimal places
+                };
+            }
+        }
+    });
+</script>
+
+<!-- Bootstrap JS -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
